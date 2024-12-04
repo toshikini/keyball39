@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  builder:
+    build:
+      context: .
+    container_name: keyball-build-container
+    volumes:
+      - .:/usr/src/app
+      - ./src:/usr/src/src
+      - ./build:/usr/src/build
+    working_dir: /usr/src/app
+    command: bash build.sh
