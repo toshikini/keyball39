@@ -2,6 +2,7 @@
 #include "quantum.h"
 
 
+// Tap Dance
 typedef enum {
     TD_NONE,
     TD_UNKNOWN,
@@ -145,11 +146,11 @@ void l_reset(tap_dance_state_t *state, void *user_data) {
 void matrix_scan_user(void) {
     if (is_double_hold_active) {
         tap_code(KC_J);
-        wait_ms(TAPPING_TERM);
+        wait_ms(TAPPING_TERM / 3);
     }
     if (is_double_hold_l_active) {
         tap_code(KC_L);
-        wait_ms(TAPPING_TERM);
+        wait_ms(TAPPING_TERM / 3);
     }
 }
 
@@ -159,32 +160,100 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 
+
+// 独自キーの作成
+enum custom_keycodes {
+    CMDSHIFT4 = SAFE_RANGE,
+};
+
+
+
+// デフォルトキーを上書きする
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    static bool comm_registered = false;
+    static bool dot_registered  = false;
+    uint8_t mod_state = get_mods();
+
+    switch (keycode) {
+        case CMDSHIFT4:
+            if (record->event.pressed) {
+                register_code(KC_LGUI);   // MacのCommandキー(Left GUI)
+                register_code(KC_LSFT);  // Shiftキー
+                register_code(KC_4);     // '4'キー
+                unregister_code(KC_4);
+                unregister_code(KC_LSFT);
+                unregister_code(KC_LGUI);
+            }
+            return false; // すでに独自処理をしたので false を返す
+        case KC_COMM: // 「,」キーが押された/離された時
+            if (record->event.pressed) {
+                // Shift が押されているかチェック
+                if (mod_state & MOD_MASK_SHIFT) {
+                    del_mods(MOD_MASK_SHIFT);
+                    register_code16(LSFT(KC_1));
+                    comm_registered = true;
+                    set_mods(mod_state);
+                    return false;
+                }
+            } else { // 離したとき
+                if (comm_registered) {
+                    unregister_code16(LSFT(KC_1));
+                    comm_registered = false;
+                    return false;
+                }
+            }
+            // 通常処理に任せる場合は true
+            return true;
+
+        case KC_DOT: // 「.」キーが押された/離された時
+            if (record->event.pressed) {
+                if (mod_state & MOD_MASK_SHIFT) {
+                    del_mods(MOD_MASK_SHIFT);
+                    register_code16(LSFT(KC_SLSH));
+                    dot_registered = true;
+                    set_mods(mod_state);
+                    return false;
+                }
+            } else {
+                if (dot_registered) {
+                    unregister_code16(LSFT(KC_SLSH));
+                    dot_registered = false;
+                    return false;
+                }
+            }
+            return true;
+    }
+    return true;
+}
+
+
+
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // keymap for default
   [0] = LAYOUT_universal(
-    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , KC_I        , KC_O        , KC_P          ,
-    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , TD(J_CTL)   , RGUI_T(KC_K), TD(L_CTL)   , RSFT_T(KC_ENT),
-    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM     , KC_DOT      , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
+    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(2,KC_I)   , KC_O        , KC_P          ,
+    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , TD(J_CTL)   , RGUI_T(KC_K) , TD(L_CTL)   , RSFT_T(KC_ENT),
+    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
   ),
 
   [1] = LAYOUT_universal(
     S(KC_MINS)     , S(KC_2)        , S(KC_3)       , S(KC_4)        , S(KC_5)       ,                              S(KC_6)      , S(KC_7), S(KC_BSLS), KC_BSLS   , S(KC_GRV),
     LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              S(KC_9)      , KC_LBRC, S(KC_COMM), S(KC_LBRC), KC_ENT   ,
-    KC_EQL         , S(KC_8)        , KC_EQL        , S(KC_QUOT)     , S(KC_SCLN)    ,                              S(KC_0)      , KC_RBRC, S(KC_DOT) , S(KC_RBRC), KC_BSPC  ,
+    S(KC_EQL)      , S(KC_8)        , KC_EQL        , S(KC_QUOT)     , S(KC_SCLN)    ,                              S(KC_0)      , KC_RBRC, S(KC_DOT) , S(KC_RBRC), KC_BSPC  ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO  , KC_NO     , KC_NO     , KC_NO
   ),
 
   [2] = LAYOUT_universal(
     S(KC_MINS)     , S(KC_2)        , S(KC_3)       , S(KC_4)        , S(KC_5)       ,                              S(KC_6)      , KC_7        , KC_8        , KC_9        , KC_0          ,
     LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              S(KC_9)      , RCTL_T(KC_4), RGUI_T(KC_5), RALT_T(KC_6), RSFT_T(KC_ENT),
-    KC_EQL         , S(KC_8)        , KC_EQL        , S(KC_QUOT)     , S(KC_SCLN)    ,                              S(KC_0)      , KC_1        , KC_2        , KC_3        , KC_BSPC       ,
+    S(KC_EQL)      , S(KC_8)        , KC_EQL        , S(KC_QUOT)     , S(KC_SCLN)    ,                              S(KC_0)      , KC_1        , KC_2        , KC_3        , KC_BSPC       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 
   [3] = LAYOUT_universal(
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , CMDSHIFT4     ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_LEFT      , KC_DOWN     , KC_UP       , KC_RGHT     , KC_ENT        ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_PGDN     , KC_PGUP     , KC_NO       , KC_BSPC       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
