@@ -232,7 +232,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // keymap for default
   [0] = LAYOUT_universal(
-    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(2,KC_I)   , KC_O        , KC_P          ,
+    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
     LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , TD(J_CTL)   , RGUI_T(KC_K) , TD(L_CTL)   , RSFT_T(KC_ENT),
     KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
@@ -272,7 +272,13 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     uint8_t highest_layer = get_highest_layer(state);
 
     switch (highest_layer) {
+        case 1:
+            tap_code(KC_LNG2);
+            break;
         case 2:
+            tap_code(KC_LNG2);
+            break;
+        case 3:
             set_auto_mouse_enable(false);
             keyball_set_scroll_mode(true);
             break;
