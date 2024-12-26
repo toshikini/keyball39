@@ -10,9 +10,7 @@ typedef enum {
     TD_SINGLE_HOLD,
     TD_DOUBLE_TAP,
     TD_DOUBLE_HOLD,
-    TD_DOUBLE_SINGLE_TAP, // Send two single taps
-    TD_TRIPLE_TAP,
-    TD_TRIPLE_HOLD
+    TD_DOUBLE_SINGLE_TAP
 } td_state_t;
 
 typedef struct {
@@ -34,12 +32,7 @@ td_state_t cur_dance(tap_dance_state_t *state) {
         if (state->interrupted) return TD_DOUBLE_SINGLE_TAP;
         else if (state->pressed) return TD_DOUBLE_HOLD;
         else return TD_DOUBLE_TAP;
-    }
-
-    if (state->count == 3) {
-        if (state->interrupted || !state->pressed) return TD_TRIPLE_TAP;
-        else return TD_TRIPLE_HOLD;
-    } else return TD_UNKNOWN;
+    } else return TD_DOUBLE_HOLD;
 }
 
 static td_tap_t jtap_state = {
@@ -293,13 +286,3 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 void keyboard_post_init_user(void) {
     layer_state_set_user(layer_state);
 }
-
-#ifdef OLED_ENABLE
-#    include "lib/oledkit/oledkit.h"
-
-void oledkit_render_info_user(void) {
-    keyball_oled_render_keyinfo();
-    keyball_oled_render_ballinfo();
-    keyball_oled_render_layerinfo();
-}
-#endif
