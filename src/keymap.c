@@ -167,11 +167,17 @@ enum custom_keycodes {
 ////////////////////////////////////////////////////////////////
 // デフォルトキーを上書きする
 ////////////////////////////////////////////////////////////////
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool comm_registered = false;
     static bool dot_registered  = false;
     static bool backspace_registered  = false;
     uint8_t mod_state = get_mods();
+
+    // レイヤー4がアクティブで、何かキーが押下されたらオートマウスレイヤーのアクティブ時間を変更
+    if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
+        set_auto_mouse_timeout(TAPPING_TERM);
+    }
 
     switch (keycode) {
         case CMDSHIFT4:
@@ -303,6 +309,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ////////////////////////////////////////////////////////////////
 // レイヤーの設定
 ////////////////////////////////////////////////////////////////
+
 layer_state_t layer_state_set_user(layer_state_t state) {
     uint8_t highest_layer = get_highest_layer(state);
 
@@ -318,6 +325,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
             keyball_set_scroll_mode(true);
             break;
         default:
+            set_auto_mouse_timeout(AUTO_MOUSE_TIME);
             set_auto_mouse_enable(true);
             keyball_set_scroll_mode(false);
             break;
