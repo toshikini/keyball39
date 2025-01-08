@@ -1,8 +1,9 @@
 #include QMK_KEYBOARD_H
 #include "quantum.h"
 
-
+////////////////////////////////////////////////////////////////
 // Tap Dance
+////////////////////////////////////////////////////////////////
 typedef enum {
     TD_NONE,
     TD_UNKNOWN,
@@ -154,14 +155,18 @@ tap_dance_action_t tap_dance_actions[] = {
 
 
 
+////////////////////////////////////////////////////////////////
 // 独自キーの作成
+////////////////////////////////////////////////////////////////
 enum custom_keycodes {
     CMDSHIFT4 = SAFE_RANGE,
 };
 
 
 
+////////////////////////////////////////////////////////////////
 // デフォルトキーを上書きする
+////////////////////////////////////////////////////////////////
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool comm_registered = false;
     static bool dot_registered  = false;
@@ -220,8 +225,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_H: // Ctrl + H で Backspace
             if (record->event.pressed) {
                 if (mod_state & MOD_MASK_CTRL) {
+                    del_mods(MOD_MASK_CTRL);
                     register_code(KC_BSPC);
                     backspace_registered = true;
+                    set_mods(mod_state);
                     return false;
                 }
             } else {
@@ -293,6 +300,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 // clang-format on
 
+////////////////////////////////////////////////////////////////
+// レイヤーの設定
+////////////////////////////////////////////////////////////////
 layer_state_t layer_state_set_user(layer_state_t state) {
     uint8_t highest_layer = get_highest_layer(state);
 
@@ -315,6 +325,9 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return state;
 }
 
+////////////////////////////////////////////////////////////////
+// キーボードの初期化
+////////////////////////////////////////////////////////////////
 void keyboard_post_init_user(void) {
     layer_state_set_user(layer_state);
 }
