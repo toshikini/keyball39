@@ -165,6 +165,7 @@ enum custom_keycodes {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool comm_registered = false;
     static bool dot_registered  = false;
+    static bool backspace_registered  = false;
     uint8_t mod_state = get_mods();
 
     switch (keycode) {
@@ -215,6 +216,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return true;
+
+        case KC_H: // Ctrl + H で Backspace
+            if (record->event.pressed) {
+                if (mod_state & MOD_MASK_CTRL) {
+                    register_code(KC_BSPC);
+                    backspace_registered = true;
+                    return false;
+                }
+            } else {
+                if (backspace_registered) {
+                    unregister_code(KC_BSPC);
+                    backspace_registered = false;
+                    return false;
+                }
+            }
+            return true;
     }
     return true;
 }
@@ -226,8 +243,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // keymap for default
   [0] = LAYOUT_universal(
     KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
-    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , TD(J_CTL)   , RGUI_T(KC_K) , TD(L_CTL)   , RSFT_T(KC_ENT),
-    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
+    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
+    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_MINS       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
   ),
 
