@@ -236,8 +236,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
+////////////////////////////////////////////////////////////////
+// コンボキーの設定
+////////////////////////////////////////////////////////////////
+enum combos {
+    JK_ESC,  // j + k で ESC
+};
+
+const uint16_t PROGMEM jk_combo[] = {RCTL_T(KC_J), RGUI_T(KC_K), COMBO_END};
+
+combo_t key_combos[] = {
+  [JK_ESC] = COMBO(jk_combo, KC_ESC),
+};
 
 
+////////////////////////////////////////////////////////////////
+// キーマップの設定
+////////////////////////////////////////////////////////////////
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // keymap for default
