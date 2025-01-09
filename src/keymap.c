@@ -3,8 +3,11 @@
  * @brief カスタムキーマップの実装
  *
  * - 独自キーコード: CMDSHIFT4
+ * - キーの上書き: SHIFT + , => !, SHIFT + . => ?, CTRL + H => BS に変更
  * - コンボキー: j+k => ESC (JK_ESC)
- * - キーの上書き: SHIFT + , => !, SHIFT + . => ? に変更
+ * - レイヤー切り替え時の挙動: レイヤー1,2 になったら英数入力に切り替える
+ * - マウスレイヤーは3秒で自動でオフになるがキーが押されたらオフになるまでの時間を短くする
+ *
  */
 
 #include QMK_KEYBOARD_H
@@ -12,15 +15,9 @@
 
 
 /*********************************************************************
- * カスタムキーコードの定義
+ * 独自キーコード
  *********************************************************************/
-/**
- * @enum custom_keycodes
- * @brief 独自キーコードとコンボのインデックスをまとめた列挙型
- */
-enum custom_keycodes {
-    CMDSHIFT4 = SAFE_RANGE,  /**< Mac の Command + Shift + 4 */
-};
+#define CMDSHIFT4 G(S(KC_4))  /**< Mac の Command + Shift + 4 */
 
 
 /*********************************************************************
@@ -33,83 +30,72 @@ enum custom_keycodes {
  * @return true で通常通り処理続行、false で以降の処理をスキップ
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    static bool comm_registered = false;
-    static bool dot_registered  = false;
-    static bool backspace_registered  = false;
-    uint8_t mod_state = get_mods();
-
     // マウスレイヤーでキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
     if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
         set_auto_mouse_timeout(TAPPING_TERM);
     }
 
-    switch (keycode) {
-        case CMDSHIFT4:  /**< Mac の Command + Shift + 4 */
-            if (record->event.pressed) {
-                register_code(KC_LGUI);
-                register_code(KC_LSFT);
-                register_code(KC_4);
-                unregister_code(KC_4);
-                unregister_code(KC_LSFT);
-                unregister_code(KC_LGUI);
-            }
-            return false;
-        case KC_COMM:  /**< ',' キー (Shift 時は '!' に) */
-            if (record->event.pressed) {
-                if (mod_state & MOD_MASK_SHIFT) {
-                    del_mods(MOD_MASK_SHIFT);
-                    register_code16(LSFT(KC_1));
-                    comm_registered = true;
-                    set_mods(mod_state);
-                    return false;
-                }
-            } else {
-                if (comm_registered) {
-                    unregister_code16(LSFT(KC_1));
-                    comm_registered = false;
-                    return false;
-                }
-            }
-            return true;
-
-        case KC_DOT:  /**< '.' キー (Shift 時は '?' に) */
-            if (record->event.pressed) {
-                if (mod_state & MOD_MASK_SHIFT) {
-                    del_mods(MOD_MASK_SHIFT);
-                    register_code16(LSFT(KC_SLSH));
-                    dot_registered = true;
-                    set_mods(mod_state);
-                    return false;
-                }
-            } else {
-                if (dot_registered) {
-                    unregister_code16(LSFT(KC_SLSH));
-                    dot_registered = false;
-                    return false;
-                }
-            }
-            return true;
-
-        case KC_H:  /**< Ctrl + H で Backspace */
-            if (record->event.pressed) {
-                if (mod_state & MOD_MASK_CTRL) {
-                    del_mods(MOD_MASK_CTRL);
-                    register_code(KC_BSPC);
-                    backspace_registered = true;
-                    set_mods(mod_state);
-                    return false;
-                }
-            } else {
-                if (backspace_registered) {
-                    unregister_code(KC_BSPC);
-                    backspace_registered = false;
-                    return false;
-                }
-            }
-            return true;
-    }
     return true;
 }
+
+
+/*********************************************************************
+ * キーの上書き
+ *********************************************************************/
+/**
+ * @brief Shift + , => '!'
+ *
+ * @details
+ * - `MOD_MASK_SHIFT`: Shift を押しながら
+ * - `KC_COMMA`: ',' (物理キー)を入力すると
+ * - `KC_EXLM`: '!' (Shift+数字キーや記号キーのエイリアス)を出力
+ */
+const key_override_t exclamation_override = ko_make_basic(
+    MOD_MASK_SHIFT,
+    KC_COMMA,
+    KC_EXLM
+);
+
+/**
+ * @brief Shift + . => '?'
+ *
+ * @details
+ * - `MOD_MASK_SHIFT`: Shift を押しながら
+ * - `KC_DOT`: '.' (物理キー)を入力すると
+ * - `KC_QUES`: '?' (Shift + / のエイリアス)を出力
+ */
+const key_override_t question_override = ko_make_basic(
+    MOD_MASK_SHIFT,
+    KC_DOT,
+    KC_QUES
+);
+
+/**
+ * @brief Ctrl + h => Backspace
+ *
+ * @details
+ * - `MOD_MASK_CTRL`: Ctrl を押しながら
+ * - `KC_H`: 'h' (物理キー)を入力すると
+ * - `KC_BSPC`: Backspace キーコードを出力
+ */
+const key_override_t backspace_override = ko_make_basic(
+    MOD_MASK_CTRL,
+    KC_H,
+    KC_BSPC
+);
+
+/**
+ * @brief 定義した key_override_t をまとめた配列
+ */
+const key_override_t *overrides_list[] = {
+    &exclamation_override,
+    &question_override,
+    &backspace_override,
+    NULL  // 終端を示すためNULLを入れる
+};
+
+// QMK が参照する key_overrides に代入
+const key_override_t **key_overrides = overrides_list;
 
 
 /*********************************************************************
