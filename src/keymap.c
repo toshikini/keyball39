@@ -1,198 +1,61 @@
+/**
+ * @file keymap.c
+ * @brief カスタムキーマップの実装
+ *
+ * - 独自キーコード: CMDSHIFT4
+ * - コンボキー: j+k => ESC (JK_ESC)
+ * - キーの上書き: SHIFT + , => !, SHIFT + . => ? に変更
+ */
+
 #include QMK_KEYBOARD_H
 #include "quantum.h"
 
-////////////////////////////////////////////////////////////////
-// Tap Dance
-////////////////////////////////////////////////////////////////
-typedef enum {
-    TD_NONE,
-    TD_UNKNOWN,
-    TD_SINGLE_TAP,
-    TD_SINGLE_HOLD,
-    TD_DOUBLE_TAP,
-    TD_DOUBLE_HOLD,
-    TD_DOUBLE_SINGLE_TAP
-} td_state_t;
 
-typedef struct {
-    bool is_press_action;
-    td_state_t state;
-} td_tap_t;
-
-// Tap dance enums
-enum {
-    J_CTL,
-    L_CTL,
-};
-
-td_state_t cur_dance(tap_dance_state_t *state) {
-    if (state->count == 1) {
-        if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
-        else return TD_SINGLE_HOLD;
-    } else if (state->count == 2) {
-        if (state->interrupted) return TD_DOUBLE_SINGLE_TAP;
-        else if (state->pressed) return TD_DOUBLE_HOLD;
-        else return TD_DOUBLE_TAP;
-    } else return TD_DOUBLE_HOLD;
-}
-
-static td_tap_t jtap_state = {
-    .is_press_action = true,
-    .state = TD_NONE
-};
-
-static td_tap_t ltap_state = {
-    .is_press_action = true,
-    .state = TD_NONE
-};
-
-bool is_double_hold_active = false;
-bool is_double_hold_l_active = false;
-
-void j_finished(tap_dance_state_t *state, void *user_data) {
-    jtap_state.state = cur_dance(state);
-    switch (jtap_state.state) {
-        case TD_SINGLE_TAP:
-            register_code(KC_J);
-            break;
-        case TD_SINGLE_HOLD:
-            register_code(KC_LCTL);
-            break;
-        case TD_DOUBLE_TAP:
-            register_code(KC_ESC);
-            break;
-        case TD_DOUBLE_HOLD:
-            is_double_hold_active = true;
-            break;
-        case TD_DOUBLE_SINGLE_TAP:
-            tap_code(KC_J);
-            tap_code(KC_J);
-            break;
-        default:
-            break;
-    }
-}
-
-void l_finished(tap_dance_state_t *state, void *user_data) {
-    ltap_state.state = cur_dance(state);
-    switch (ltap_state.state) {
-        case TD_SINGLE_TAP:
-            register_code(KC_L);
-            break;
-        case TD_SINGLE_HOLD:
-            register_code(KC_LALT);
-            break;
-        case TD_DOUBLE_TAP:
-            register_code(KC_MINS);
-            break;
-        case TD_DOUBLE_HOLD:
-            is_double_hold_l_active = true;
-            break;
-        case TD_DOUBLE_SINGLE_TAP:
-            tap_code(KC_L);
-            tap_code(KC_L);
-            break;
-        default:
-            break;
-    }
-}
-
-void j_reset(tap_dance_state_t *state, void *user_data) {
-    switch (jtap_state.state) {
-        case TD_SINGLE_TAP:
-            unregister_code(KC_J);
-            break;
-        case TD_SINGLE_HOLD:
-            unregister_code(KC_LCTL);
-            break;
-        case TD_DOUBLE_TAP:
-            unregister_code(KC_ESC);
-            break;
-        case TD_DOUBLE_HOLD:
-            is_double_hold_active = false;
-            break;
-        default:
-            break;
-    }
-    jtap_state.state = TD_NONE;
-}
-
-void l_reset(tap_dance_state_t *state, void *user_data) {
-    switch (ltap_state.state) {
-        case TD_SINGLE_TAP:
-            unregister_code(KC_L);
-            break;
-        case TD_SINGLE_HOLD:
-            unregister_code(KC_LALT);
-            break;
-        case TD_DOUBLE_TAP:
-            unregister_code(KC_MINS);
-            break;
-        case TD_DOUBLE_HOLD:
-            is_double_hold_l_active = false;
-            break;
-        default:
-            break;
-    }
-    ltap_state.state = TD_NONE;
-}
-
-void matrix_scan_user(void) {
-    if (is_double_hold_active) {
-        tap_code(KC_J);
-        wait_ms(TAPPING_TERM / 3);
-    }
-    if (is_double_hold_l_active) {
-        tap_code(KC_L);
-        wait_ms(TAPPING_TERM / 3);
-    }
-}
-
-tap_dance_action_t tap_dance_actions[] = {
-    [J_CTL] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, j_finished, j_reset),
-    [L_CTL] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, l_finished, l_reset)
-};
-
-
-
-////////////////////////////////////////////////////////////////
-// 独自キーの作成
-////////////////////////////////////////////////////////////////
+/*********************************************************************
+ * カスタムキーコードの定義
+ *********************************************************************/
+/**
+ * @enum custom_keycodes
+ * @brief 独自キーコードとコンボのインデックスをまとめた列挙型
+ */
 enum custom_keycodes {
-    CMDSHIFT4 = SAFE_RANGE,
+    CMDSHIFT4 = SAFE_RANGE,  /**< Mac の Command + Shift + 4 */
 };
 
 
-
-////////////////////////////////////////////////////////////////
-// デフォルトキーを上書きする
-////////////////////////////////////////////////////////////////
-
+/*********************************************************************
+ * キーが押された時の挙動の定義(デフォルトの挙動を書き換える)
+ *********************************************************************/
+/**
+ * @brief キー入力を処理するフック関数
+ *
+ * 独自キーコードや特定条件下での振る舞いを上書きする。
+ * @return true で通常通り処理続行、false で以降の処理をスキップ
+ */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool comm_registered = false;
     static bool dot_registered  = false;
     static bool backspace_registered  = false;
     uint8_t mod_state = get_mods();
 
-    // レイヤー4がアクティブで、何かキーが押下されたらオートマウスレイヤーのアクティブ時間を変更
+    // マウスレイヤーでキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
     if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
         set_auto_mouse_timeout(TAPPING_TERM);
     }
 
     switch (keycode) {
-        case CMDSHIFT4:
+        case CMDSHIFT4:  /**< Mac の Command + Shift + 4 */
             if (record->event.pressed) {
-                register_code(KC_LGUI);   // MacのCommandキー(Left GUI)
-                register_code(KC_LSFT);  // Shiftキー
-                register_code(KC_4);     // '4'キー
+                register_code(KC_LGUI);
+                register_code(KC_LSFT);
+                register_code(KC_4);
                 unregister_code(KC_4);
                 unregister_code(KC_LSFT);
                 unregister_code(KC_LGUI);
             }
-            return false; // すでに独自処理をしたので false を返す
-        case KC_COMM: // 「,」キーが押された/離された時
+            return false;
+        case KC_COMM:  /**< ',' キー (Shift 時は '!' に) */
             if (record->event.pressed) {
-                // Shift が押されているかチェック
                 if (mod_state & MOD_MASK_SHIFT) {
                     del_mods(MOD_MASK_SHIFT);
                     register_code16(LSFT(KC_1));
@@ -200,17 +63,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     set_mods(mod_state);
                     return false;
                 }
-            } else { // 離したとき
+            } else {
                 if (comm_registered) {
                     unregister_code16(LSFT(KC_1));
                     comm_registered = false;
                     return false;
                 }
             }
-            // 通常処理に任せる場合は true
             return true;
 
-        case KC_DOT: // 「.」キーが押された/離された時
+        case KC_DOT:  /**< '.' キー (Shift 時は '?' に) */
             if (record->event.pressed) {
                 if (mod_state & MOD_MASK_SHIFT) {
                     del_mods(MOD_MASK_SHIFT);
@@ -228,7 +90,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return true;
 
-        case KC_H: // Ctrl + H で Backspace
+        case KC_H:  /**< Ctrl + H で Backspace */
             if (record->event.pressed) {
                 if (mod_state & MOD_MASK_CTRL) {
                     del_mods(MOD_MASK_CTRL);
@@ -249,24 +111,41 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-////////////////////////////////////////////////////////////////
-// コンボキーの設定
-////////////////////////////////////////////////////////////////
+
+/*********************************************************************
+ * コンボキーの定義
+ *********************************************************************/
+/**
+ * @enum combos
+ * @brief コンボキー用のインデックス
+ */
 enum combos {
-    JK_ESC,  // j + k で ESC
+    JK_ESC,  /**< j + k => ESC */
 };
 
+
+/**
+ * @brief コンボに使用するキー列
+ */
 const uint16_t PROGMEM jk_combo[] = {RCTL_T(KC_J), RGUI_T(KC_K), COMBO_END};
 
+
+/**
+ * @brief コンボをまとめて定義する配列
+ */
 combo_t key_combos[] = {
   [JK_ESC] = COMBO(jk_combo, KC_ESC),
 };
 
 
-////////////////////////////////////////////////////////////////
-// キーマップの設定
-////////////////////////////////////////////////////////////////
-// clang-format off
+/*********************************************************************
+ * キーマップの定義
+ *********************************************************************/
+/**
+ * @brief 各レイヤーのキーマップ
+ *
+ * clang-format off
+ */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // keymap for default
   [0] = LAYOUT_universal(
@@ -304,28 +183,32 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 };
-// clang-format on
+/** clang-format on */
 
-////////////////////////////////////////////////////////////////
-// レイヤーの設定
-////////////////////////////////////////////////////////////////
 
+/*********************************************************************
+ * レイヤー切り替えた時の挙動
+ *********************************************************************/
+/**
+ * @brief レイヤーの状態を更新するフック関数
+ */
 layer_state_t layer_state_set_user(layer_state_t state) {
     uint8_t highest_layer = get_highest_layer(state);
 
     switch (highest_layer) {
         case 1:
-            tap_code(KC_LNG2);
+            tap_code(KC_LNG2);  // レイヤー1になったら英数入力に切り替える
             break;
         case 2:
-            tap_code(KC_LNG2);
+            tap_code(KC_LNG2);  // レイヤー2になったら英数入力に切り替える
             break;
         case 3:
             set_auto_mouse_enable(false);
             keyball_set_scroll_mode(true);
             break;
         default:
-            set_auto_mouse_timeout(AUTO_MOUSE_TIME);
+            // デフォルトレイヤーに戻ったらオートマウスの設定を元に戻す。AUTO_MOUSE_TIMEは最大値が1秒なので3倍にする
+            set_auto_mouse_timeout(AUTO_MOUSE_TIME * 3);
             set_auto_mouse_enable(true);
             keyball_set_scroll_mode(false);
             break;
@@ -333,9 +216,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return state;
 }
 
-////////////////////////////////////////////////////////////////
-// キーボードの初期化
-////////////////////////////////////////////////////////////////
+
+/**
+ * @brief キーボード初期化後に呼ばれるユーザーフック関数
+ */
 void keyboard_post_init_user(void) {
     layer_state_set_user(layer_state);
 }
