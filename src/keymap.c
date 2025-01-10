@@ -35,7 +35,7 @@ enum orginal_keycodes {
  * @brief 状態管理に必要な変数
  */
 static uint16_t down_cpi = 2;
-static uint16_t latest_cpi = 7;
+static uint16_t latest_cpi = 6;
 static bool cpi_state  = false;
 
 
@@ -201,7 +201,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   [4] = LAYOUT_universal(
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
