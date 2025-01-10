@@ -17,7 +17,46 @@
 /*********************************************************************
  * 独自キーコード
  *********************************************************************/
-#define CMDSHIFT4 G(S(KC_4))  /**< Mac の Command + Shift + 4 */
+#define CMDSHIFT4 G(S(KC_4))  /** Mac の Command + Shift + 4 */
+
+/**
+ * @enum orginal_keycodes
+ * @brief 独自キーコード用のインデックス
+ */
+enum orginal_keycodes {
+    PR_TGL,  /** トラックボールの速度を変更するためのトグル */
+};
+
+
+/*********************************************************************
+ * トラックボールの速度を動的に変更する
+ *********************************************************************/
+/**
+ * @brief 状態管理に必要な変数
+ */
+static uint16_t down_cpi = 2;
+static uint16_t latest_cpi = 7;
+static bool cpi_state  = false;
+
+
+/**
+ * @brief トラックボールの速度を変更するためのトグル関数
+ */
+void precision_toggle(bool pressed) {
+    if (!pressed) {
+        return;
+    }
+
+    uint16_t current_cpi = keyball_get_cpi();
+    if (!cpi_state || down_cpi != current_cpi) {
+        latest_cpi = current_cpi;
+        keyball_set_cpi(down_cpi);
+        cpi_state = true;
+    } else {
+        keyball_set_cpi(latest_cpi);
+        cpi_state = false;
+    }
+}
 
 
 /*********************************************************************
@@ -33,6 +72,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // マウスレイヤーでキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
     if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
         set_auto_mouse_timeout(TAPPING_TERM);
+    }
+
+    switch(keycode) {
+         case PR_TGL:
+            precision_toggle(record->event.pressed);
+            return false;
+        default:
+            break;
     }
 
     return true;
@@ -71,26 +118,11 @@ const key_override_t question_override = ko_make_basic(
 );
 
 /**
- * @brief Ctrl + h => Backspace
- *
- * @details
- * - `MOD_MASK_CTRL`: Ctrl を押しながら
- * - `KC_H`: 'h' (物理キー)を入力すると
- * - `KC_BSPC`: Backspace キーコードを出力
- */
-const key_override_t backspace_override = ko_make_basic(
-    MOD_MASK_CTRL,
-    KC_H,
-    KC_BSPC
-);
-
-/**
  * @brief 定義した key_override_t をまとめた配列
  */
 const key_override_t *overrides_list[] = {
     &exclamation_override,
     &question_override,
-    &backspace_override,
     NULL  // 終端を示すためNULLを入れる
 };
 
@@ -106,7 +138,8 @@ const key_override_t **key_overrides = overrides_list;
  * @brief コンボキー用のインデックス
  */
 enum combos {
-    JK_ESC,  /**< j + k => ESC */
+    JK_ESC,  /** j + k => ESC */
+    DOTCOM_MINS,  /** . + , => - */
 };
 
 
@@ -114,6 +147,7 @@ enum combos {
  * @brief コンボに使用するキー列
  */
 const uint16_t PROGMEM jk_combo[] = {RCTL_T(KC_J), RGUI_T(KC_K), COMBO_END};
+const uint16_t PROGMEM dotcom_combo[] = {KC_DOT, KC_COMMA, COMBO_END};
 
 
 /**
@@ -121,7 +155,11 @@ const uint16_t PROGMEM jk_combo[] = {RCTL_T(KC_J), RGUI_T(KC_K), COMBO_END};
  */
 combo_t key_combos[] = {
   [JK_ESC] = COMBO(jk_combo, KC_ESC),
+  [DOTCOM_MINS] = COMBO(dotcom_combo, KC_MINS),
 };
+
+
+
 
 
 /*********************************************************************
@@ -137,8 +175,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [0] = LAYOUT_universal(
     KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
     LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
-    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_MINS       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
+    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , PR_TGL
   ),
 
   [1] = LAYOUT_universal(
@@ -165,7 +203,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [4] = LAYOUT_universal(
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 };
