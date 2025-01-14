@@ -19,26 +19,10 @@
  *********************************************************************/
 #define CMDSHIFT4 G(S(KC_4))  /** Mac の Command + Shift + 4 */
 
-/**
- * @enum orginal_keycodes
- * @brief 独自キーコード用のインデックス
- */
-enum orginal_keycodes {
-    PR_TGL,  /** トラックボールの速度を変更するためのトグル */
-};
-
 
 /*********************************************************************
  * トラックボールの速度を動的に変更する
  *********************************************************************/
-/**
- * @brief 状態管理に必要な変数
- */
-static uint16_t down_cpi = 2;
-static uint16_t latest_cpi = 6;
-static bool cpi_state  = false;
-
-
 /**
  * @brief トラックボールの速度を変更するためのトグル関数
  */
@@ -47,21 +31,29 @@ void precision_toggle(bool pressed) {
         return;
     }
 
+    // 低速モードと通常モードのCPI値
+    const uint16_t down_cpi = 2;
+    const uint16_t latest_cpi = 6;
+
+    // 現在のCPIに基づいて切り替え
     uint16_t current_cpi = keyball_get_cpi();
-    if (!cpi_state || down_cpi != current_cpi) {
-        latest_cpi = current_cpi;
-        keyball_set_cpi(down_cpi);
-        cpi_state = true;
-    } else {
-        keyball_set_cpi(latest_cpi);
-        cpi_state = false;
-    }
+    keyball_set_cpi(current_cpi == down_cpi ? latest_cpi : down_cpi);
 }
 
 
 /*********************************************************************
  * キーが押された時の挙動の定義(デフォルトの挙動を書き換える)
  *********************************************************************/
+
+/**
+ * @enum original_keycodes
+ * @brief 独自キーコード用のインデックス
+ */
+enum original_keycodes {
+    PR_TGL,  /** トラックボールの速度を変更するためのトグル */
+};
+
+
 /**
  * @brief キー入力を処理するフック関数
  *
@@ -157,9 +149,6 @@ combo_t key_combos[] = {
   [JK_ESC] = COMBO(jk_combo, KC_ESC),
   [DOTCOM_MINS] = COMBO(dotcom_combo, KC_MINS),
 };
-
-
-
 
 
 /*********************************************************************
