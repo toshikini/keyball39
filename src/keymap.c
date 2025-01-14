@@ -1,13 +1,12 @@
 /**
  * @file keymap.c
- * @brief カスタムキーマップの実装
- *
- * - 独自キーコード: CMDSHIFT4
- * - キーの上書き: SHIFT + , => !, SHIFT + . => ?, CTRL + H => BS に変更
- * - コンボキー: j+k => ESC (JK_ESC)
- * - レイヤー切り替え時の挙動: レイヤー1,2 になったら英数入力に切り替える
- * - マウスレイヤーは3秒で自動でオフになるがキーが押されたらオフになるまでの時間を短くする
- *
+ * @brief Custom QMK keymap:
+ * - PR_TGL key toggles trackball speed
+ * - Key overrides: Shift+, => ! / Shift+. => ? / Ctrl+H => Backspace
+ * - Combo keys: j+k => ESC, .+, => -
+ * - Layers 1 and 2 automatically switch to English (KC_LNG2)
+ * - Mouse layer (layer 3) auto-disables after 3s, time shortened by key presses
+ * - CMDSHIFT4 macro for Mac screenshots (Command+Shift+4)
  */
 
 #include QMK_KEYBOARD_H
@@ -15,13 +14,13 @@
 
 
 /*********************************************************************
- * 独自キーコード
+ * Macros
  *********************************************************************/
 #define CMDSHIFT4 G(S(KC_4))  /** Mac の Command + Shift + 4 */
 
 
 /*********************************************************************
- * トラックボールの速度を動的に変更する
+ * Trackball speed control
  *********************************************************************/
 /**
  * @brief トラックボールの速度を変更するためのトグル関数
@@ -42,7 +41,7 @@ void precision_toggle(bool pressed) {
 
 
 /*********************************************************************
- * キーが押された時の挙動の定義(デフォルトの挙動を書き換える)
+ * Key Press Handling
  *********************************************************************/
 
 /**
@@ -79,7 +78,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 
 /*********************************************************************
- * キーの上書き
+ * Key Overrides
  *********************************************************************/
 /**
  * @brief Shift + , => '!'
@@ -123,7 +122,7 @@ const key_override_t **key_overrides = overrides_list;
 
 
 /*********************************************************************
- * コンボキーの定義
+ * Combos
  *********************************************************************/
 /**
  * @enum combos
@@ -152,7 +151,7 @@ combo_t key_combos[] = {
 
 
 /*********************************************************************
- * キーマップの定義
+ * Keymaps
  *********************************************************************/
 /**
  * @brief 各レイヤーのキーマップ
@@ -160,7 +159,7 @@ combo_t key_combos[] = {
  * clang-format off
  */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-  // keymap for default
+  // Layer 0: Default Layer
   [0] = LAYOUT_universal(
     KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
     LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
@@ -168,6 +167,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , PR_TGL
   ),
 
+  // Layer 1: Symbols Layer
   [1] = LAYOUT_universal(
     S(KC_MINS)     , S(KC_2)        , S(KC_3)       , S(KC_4)        , S(KC_5)       ,                              S(KC_6)      , S(KC_7), S(KC_BSLS), KC_BSLS   , S(KC_GRV),
     LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              S(KC_9)      , KC_LBRC, S(KC_COMM), S(KC_LBRC), KC_ENT   ,
@@ -175,6 +175,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO  , KC_NO     , KC_NO     , KC_NO
   ),
 
+  // Layer 2: Number Layer
   [2] = LAYOUT_universal(
     S(KC_MINS)     , S(KC_2)        , S(KC_3)       , S(KC_4)        , S(KC_5)       ,                              S(KC_6)      , KC_7        , KC_8        , KC_9        , KC_0          ,
     LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              S(KC_9)      , RCTL_T(KC_4), RGUI_T(KC_5), RALT_T(KC_6), RSFT_T(KC_ENT),
@@ -182,6 +183,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 
+  // Layer 3: Function Layer
   [3] = LAYOUT_universal(
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , CMDSHIFT4     ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_LEFT      , KC_DOWN     , KC_UP       , KC_RGHT     , KC_ENT        ,
@@ -189,6 +191,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 
+  // Layer 4: Mouse Layer
   [4] = LAYOUT_universal(
     KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
@@ -200,7 +203,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 /*********************************************************************
- * レイヤー切り替えた時の挙動
+ * Layer Change hook
  *********************************************************************/
 /**
  * @brief レイヤーの状態を更新するフック関数

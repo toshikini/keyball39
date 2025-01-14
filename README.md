@@ -4,8 +4,12 @@ This is a costmized qmk firmware for Keyball39. The original firmware is [Yowkee
 
 ### Changes
 
-1. xxx
-2. xxx
+ * - PR_TGL key toggles trackball speed
+ * - Key overrides: Shift+, => ! / Shift+. => ? / Ctrl+H => Backspace
+ * - Combo keys: j+k => ESC, .+, => -
+ * - Layers 1 and 2 automatically switch to English (KC_LNG2)
+ * - Mouse layer (layer 3) auto-disables after 3s, time shortened by key presses
+ * - CMDSHIFT4 macro for Mac screenshots (Command+Shift+4)
 
 
 ## How to Build
