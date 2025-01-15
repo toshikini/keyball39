@@ -32,11 +32,11 @@ void precision_toggle(bool pressed) {
 
     // 低速モードと通常モードのCPI値
     const uint16_t down_cpi = 2;
-    const uint16_t latest_cpi = 6;
+    const uint16_t nomal_cpi = 6;
 
     // 現在のCPIに基づいて切り替え
     uint16_t current_cpi = keyball_get_cpi();
-    keyball_set_cpi(current_cpi == down_cpi ? latest_cpi : down_cpi);
+    keyball_set_cpi(current_cpi == down_cpi ? nomal_cpi : down_cpi);
 }
 
 
@@ -49,7 +49,7 @@ void precision_toggle(bool pressed) {
  * @brief 独自キーコード用のインデックス
  */
 enum original_keycodes {
-    PR_TGL,  /** トラックボールの速度を変更するためのトグル */
+    PR_TGL = SAFE_RANGE,  /** トラックボールの速度を変更するためのトグル */
 };
 
 
