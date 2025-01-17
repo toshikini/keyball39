@@ -2,10 +2,10 @@
  * @file keymap.c
  * @brief Custom QMK keymap:
  * - PR_TGL key toggles trackball speed
- * - Key overrides: Shift+, => ! / Shift+. => ? / Ctrl+H => Backspace
+ * - Key overrides: Shift+, => ! / Shift+. => ? / Ctrl+H => Backspace / Ctrl+D => Delete
  * - Combo keys: j+k => ESC, .+, => -
  * - Layers 1 and 2 automatically switch to English (KC_LNG2)
- * - Mouse layer (layer 3) auto-disables after 3s, time shortened by key presses
+ * - Mouse layer (layer 3) auto-disables after 4s, time shortened by key presses
  * - CMDSHIFT4 macro for Mac screenshots (Command+Shift+4)
  */
 
@@ -31,8 +31,8 @@ void precision_toggle(bool pressed) {
     }
 
     // 低速モードと通常モードのCPI値
-    const uint16_t down_cpi = 2;
-    const uint16_t nomal_cpi = 6;
+    const uint16_t down_cpi = 3;
+    const uint16_t nomal_cpi = 10;
 
     // 現在のCPIに基づいて切り替え
     uint16_t current_cpi = keyball_get_cpi();
@@ -60,6 +60,10 @@ enum original_keycodes {
  * @return true で通常通り処理続行、false で以降の処理をスキップ
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    static bool backspace_registered  = false;
+    static bool delete_registered  = false;
+    uint8_t mod_state = get_mods();
+
     // マウスレイヤーでキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
     if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
         set_auto_mouse_timeout(TAPPING_TERM);
@@ -69,7 +73,41 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
          case PR_TGL:
             precision_toggle(record->event.pressed);
             return false;
-        default:
+         case KC_H: // Ctrl + H で Backspace
+            if (record->event.pressed) {
+                if (mod_state & MOD_MASK_CTRL) {
+                    del_mods(MOD_MASK_CTRL);
+                    register_code(KC_BSPC);
+                    backspace_registered = true;
+                    set_mods(mod_state);
+                    return false;
+                }
+            } else {
+                if (backspace_registered) {
+                    unregister_code(KC_BSPC);
+                    backspace_registered = false;
+                    return false;
+                }
+            }
+            return true;
+         case KC_D: // Ctrl + D で Delete
+            if (record->event.pressed) {
+                if (mod_state & MOD_MASK_CTRL) {
+                    del_mods(MOD_MASK_CTRL);
+                    register_code(KC_DEL);
+                    delete_registered = true;
+                    set_mods(mod_state);
+                    return false;
+                }
+            } else {
+                if (delete_registered) {
+                    unregister_code(KC_DEL);
+                    delete_registered = false;
+                    return false;
+                }
+            }
+            return true;
+         default:
             break;
     }
 
@@ -162,9 +200,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // Layer 0: Default Layer
   [0] = LAYOUT_universal(
     KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
-    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
+    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , LT(4,KC_G)    ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
     KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , PR_TGL
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
   ),
 
   // Layer 1: Symbols Layer
@@ -185,16 +223,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   // Layer 3: Function Layer
   [3] = LAYOUT_universal(
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , CMDSHIFT4     ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_PGDN     , KC_NO       , KC_PGUP     , CMDSHIFT4     ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_LEFT      , KC_DOWN     , KC_UP       , KC_RGHT     , KC_ENT        ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_PGDN     , KC_PGUP     , KC_NO       , KC_BSPC       ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_BSPC       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 
   // Layer 4: Mouse Layer
   [4] = LAYOUT_universal(
     KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
-    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
+    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , PR_TGL        ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
@@ -223,8 +261,8 @@ layer_state_t layer_state_set_user(layer_state_t state) {
             keyball_set_scroll_mode(true);
             break;
         default:
-            // デフォルトレイヤーに戻ったらオートマウスの設定を元に戻す。AUTO_MOUSE_TIMEは最大値が1秒なので3倍にする
-            set_auto_mouse_timeout(AUTO_MOUSE_TIME * 3);
+            // デフォルトレイヤーに戻ったらオートマウスの設定を元に戻す。AUTO_MOUSE_TIMEは最大値が1秒なので4倍にする
+            set_auto_mouse_timeout(AUTO_MOUSE_TIME * 4);
             set_auto_mouse_enable(true);
             keyball_set_scroll_mode(false);
             break;
