@@ -36,7 +36,7 @@ void precision_toggle(bool pressed) {
 
     // 現在のCPIに基づいて切り替え
     uint16_t current_cpi = keyball_get_cpi();
-    keyball_set_cpi(current_cpi == down_cpi ? nomal_cpi : down_cpi);
+    keyball_set_cpi(current_cpi == nomal_cpi ? down_cpi : nomal_cpi);
 }
 
 
