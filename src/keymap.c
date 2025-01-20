@@ -64,9 +64,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool delete_registered  = false;
     uint8_t mod_state = get_mods();
 
-    // マウスレイヤーでキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
+    // マウスレイヤーで特定のキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
     if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
-        set_auto_mouse_timeout(TAPPING_TERM);
+        switch (keycode) {
+            case KC_BTN1:
+            case KC_BTN3:
+            case KC_BTN2:
+            case LT(3, KC_NO):
+            case LT(3, KC_LNG2):
+            case LT(1, KC_LNG1):
+                set_auto_mouse_timeout(TAPPING_TERM);
+                break;
+            default:
+                break;
+        }
     }
 
     switch(keycode) {
@@ -200,9 +211,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // Layer 0: Default Layer
   [0] = LAYOUT_universal(
     KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
-    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , LT(4,KC_G)    ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
+    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
     KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
+    KC_NO          , KC_NO          , KC_NO         , LT(5,KC_NO)    , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
   ),
 
   // Layer 1: Symbols Layer
@@ -231,6 +242,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   // Layer 4: Mouse Layer
   [4] = LAYOUT_universal(
+    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
+    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , PR_TGL        ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
+  ),
+
+  // Layer 5: Manual Mouse Layer
+  [5] = LAYOUT_universal(
     KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , PR_TGL        ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
@@ -276,4 +295,5 @@ layer_state_t layer_state_set_user(layer_state_t state) {
  */
 void keyboard_post_init_user(void) {
     layer_state_set_user(layer_state);
+    precision_toggle(true);  // トラックボールの速度を初期化
 }
