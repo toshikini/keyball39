@@ -70,6 +70,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             case KC_BTN1:
             case KC_BTN3:
             case KC_BTN2:
+            case KC_NO:
             case LT(3, KC_NO):
             case LT(3, KC_LNG2):
             case LT(1, KC_LNG1):
@@ -213,7 +214,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
     LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
     KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , LT(5,KC_NO)    , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
+    KC_NO          , KC_NO          , KC_NO         , LT(5,KC_ESC)   , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
   ),
 
   // Layer 1: Symbols Layer
@@ -242,17 +243,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   // Layer 4: Mouse Layer
   [4] = LAYOUT_universal(
-    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
-    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , PR_TGL        ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , PR_TGL        ,
+    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 
   // Layer 5: Manual Mouse Layer
   [5] = LAYOUT_universal(
-    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , KC_NO         ,
-    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , PR_TGL        ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , S(KC_SCLN)    ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , PR_TGL        ,
+    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 };
@@ -278,6 +279,8 @@ layer_state_t layer_state_set_user(layer_state_t state) {
         case 3:
             set_auto_mouse_enable(false);
             keyball_set_scroll_mode(true);
+            break;
+        case 5:  // Manual Mouse Layerではオートマウスを無効にする
             break;
         default:
             // デフォルトレイヤーに戻ったらオートマウスの設定を元に戻す。AUTO_MOUSE_TIMEは最大値が1秒なので4倍にする
