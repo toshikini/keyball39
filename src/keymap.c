@@ -4,8 +4,6 @@
  * - PR_TGL key toggles trackball speed
  * - Key overrides: Shift+, => ! / Shift+. => ? / Ctrl+H => Backspace / Ctrl+D => Delete
  * - Combo keys: j+k => ESC, .+, => -
- * - Layers 1 and 2 automatically switch to English (KC_LNG2)
- * - Mouse layer (layer 3) auto-disables after 4s, time shortened by key presses
  * - CMDSHIFT4 macro for Mac screenshots (Command+Shift+4)
  */
 
@@ -63,23 +61,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool backspace_registered  = false;
     static bool delete_registered  = false;
     uint8_t mod_state = get_mods();
-
-    // マウスレイヤーで特定のキーが押下されたらオートマウスレイヤーのアクティブ時間を短くする
-    if (record->event.pressed && layer_state_is(AUTO_MOUSE_DEFAULT_LAYER)) {
-        switch (keycode) {
-            case KC_BTN1:
-            case KC_BTN3:
-            case KC_BTN2:
-            case KC_NO:
-            case LT(3, KC_NO):
-            case LT(3, KC_LNG2):
-            case LT(1, KC_LNG1):
-                set_auto_mouse_timeout(TAPPING_TERM);
-                break;
-            default:
-                break;
-        }
-    }
 
     switch(keycode) {
          case PR_TGL:
@@ -188,7 +169,7 @@ enum combos {
  * @brief コンボに使用するキー列
  */
 const uint16_t PROGMEM jk_combo[] = {RCTL_T(KC_J), RGUI_T(KC_K), COMBO_END};
-const uint16_t PROGMEM dotcom_combo[] = {KC_DOT, KC_COMMA, COMBO_END};
+const uint16_t PROGMEM dotcom_combo[] = {LT(4,KC_COMM), KC_DOT, COMBO_END};
 
 
 /**
@@ -211,10 +192,10 @@ combo_t key_combos[] = {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // Layer 0: Default Layer
   [0] = LAYOUT_universal(
-    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)   , KC_O        , KC_P          ,
-    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K) , RALT_T(KC_L), RSFT_T(KC_ENT),
-    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM      , KC_DOT      , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , LT(5,KC_ESC)   , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO        , KC_NO       , KC_NO
+    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)     , KC_O        , KC_P          ,
+    LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K)   , RALT_T(KC_L), RSFT_T(KC_ENT),
+    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , LT(4,KC_M)  , LT(4,KC_COMM)  , KC_DOT      , KC_BSPC       ,
+    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO          , KC_NO       , KC_NO
   ),
 
   // Layer 1: Symbols Layer
@@ -248,14 +229,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
-
-  // Layer 5: Manual Mouse Layer
-  [5] = LAYOUT_universal(
-    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , PR_TGL        ,
-    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
-  ),
 };
 /** clang-format on */
 
@@ -270,22 +243,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     uint8_t highest_layer = get_highest_layer(state);
 
     switch (highest_layer) {
-        case 1:
-            tap_code(KC_LNG2);  // レイヤー1になったら英数入力に切り替える
-            break;
-        case 2:
-            tap_code(KC_LNG2);  // レイヤー2になったら英数入力に切り替える
-            break;
         case 3:
-            set_auto_mouse_enable(false);
             keyball_set_scroll_mode(true);
             break;
-        case 5:  // Manual Mouse Layerではオートマウスを無効にする
-            break;
         default:
-            // デフォルトレイヤーに戻ったらオートマウスの設定を元に戻す。AUTO_MOUSE_TIMEは最大値が1秒なので4倍にする
-            set_auto_mouse_timeout(AUTO_MOUSE_TIME * 4);
-            set_auto_mouse_enable(true);
             keyball_set_scroll_mode(false);
             break;
     }
