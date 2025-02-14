@@ -121,7 +121,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  */
 const key_override_t exclamation_override = ko_make_basic(
     MOD_MASK_SHIFT,
-    KC_COMMA,
+    LT(4,KC_COMMA),
     KC_EXLM
 );
 
