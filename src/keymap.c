@@ -9,6 +9,7 @@
 
 #include QMK_KEYBOARD_H
 #include "quantum.h"
+#include "os_detection.h"
 
 
 /*********************************************************************
@@ -48,7 +49,27 @@ void precision_toggle(bool pressed) {
  */
 enum original_keycodes {
     PR_TGL = SAFE_RANGE,  /** トラックボールの速度を変更するためのトグル */
+    JIS_TGL = SAFE_RANGE + 1,  /** JIS配列キーボードの場合のトグル */
 };
+
+
+/**
+ * @brief JIS配列キーボードかどうかのフラグ
+ */
+bool is_jis = false;
+
+/**
+ * @brief OSを検出する関数
+ */
+uint32_t keyboard_callback(uint32_t delay, void *cb_arg) {
+    switch(detected_host_os()) {
+        case OS_WINDOWS:
+            is_jis = true;
+        default:
+            is_jis = false;
+    }
+    return 0;
+}
 
 
 /**
@@ -63,10 +84,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t mod_state = get_mods();
 
     switch(keycode) {
-         case PR_TGL:
+        case PR_TGL:
             precision_toggle(record->event.pressed);
             return false;
-         case KC_H: // Ctrl + H で Backspace
+        case KC_H: // Ctrl + H で Backspace
             if (record->event.pressed) {
                 if (mod_state & MOD_MASK_CTRL) {
                     del_mods(MOD_MASK_CTRL);
@@ -83,7 +104,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return true;
-         case KC_D: // Ctrl + D で Delete
+        case KC_D: // Ctrl + D で Delete
             if (record->event.pressed) {
                 if (mod_state & MOD_MASK_CTRL) {
                     del_mods(MOD_MASK_CTRL);
@@ -100,6 +121,196 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return true;
+        case JIS_TGL:
+            if (record->event.pressed) {
+                is_jis = !is_jis;
+            }
+            return false;
+        case KC_AT:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LBRC);
+                unregister_code(KC_LBRC);
+                return false;
+            }
+            break;
+        case KC_HASH:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_3);
+                unregister_code(KC_3);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_DLR:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_4);
+                unregister_code(KC_4);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_PERC:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_5);
+                unregister_code(KC_5);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_CIRC:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_EQL);
+                unregister_code(KC_EQL);
+                return false;
+            }
+            break;
+        case KC_AMPR:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_6);
+                unregister_code(KC_6);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_PIPE:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_INT3);
+                unregister_code(KC_INT3);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_BSLS:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_INT1);
+                unregister_code(KC_INT1);
+                return false;
+            }
+            break;
+        case KC_TILD:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_EQL);
+                unregister_code(KC_EQL);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_PLUS:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_SCLN);
+                unregister_code(KC_SCLN);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_ASTR:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_QUOT);
+                unregister_code(KC_QUOT);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case LCTL_T(KC_QUOT):
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_7);
+                unregister_code(KC_7);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_EQL:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_MINS);
+                unregister_code(KC_MINS);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_DQUO:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_2);
+                unregister_code(KC_2);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_COLN:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_QUOT);
+                unregister_code(KC_QUOT);
+                return false;
+            }
+            break;
+        case LGUI_T(KC_GRV):
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_LBRC);
+                unregister_code(KC_LBRC);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+        case KC_RPRN:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_9);
+                unregister_code(KC_9);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_LPRN:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_8);
+                unregister_code(KC_8);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_LBRC:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_RBRC);
+                unregister_code(KC_RBRC);
+                return false;
+            }
+            break;
+        case KC_RBRC:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_NUHS);
+                unregister_code(KC_NUHS);
+                return false;
+            }
+            break;
+        case KC_LCBR:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_RBRC);
+                unregister_code(KC_RBRC);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
+        case KC_RCBR:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_LSFT);
+                register_code(KC_NUHS);
+                unregister_code(KC_NUHS);
+                unregister_code(KC_LSFT);
+                return false;
+            }
+            break;
          default:
             break;
     }
@@ -200,23 +411,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   // Layer 1: Symbols Layer
   [1] = LAYOUT_universal(
-    S(KC_MINS)     , S(KC_2)        , S(KC_3)       , S(KC_4)        , S(KC_5)       ,                              S(KC_6)      , S(KC_7), S(KC_BSLS), KC_BSLS   , S(KC_GRV),
-    LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              S(KC_9)      , KC_LBRC, S(KC_COMM), S(KC_LBRC), KC_ENT   ,
-    S(KC_EQL)      , S(KC_8)        , KC_EQL        , S(KC_QUOT)     , S(KC_SCLN)    ,                              S(KC_0)      , KC_RBRC, S(KC_DOT) , S(KC_RBRC), KC_BSPC  ,
+    KC_UNDS        , KC_AT          , KC_HASH       , KC_DLR         , KC_PERC       ,                              KC_CIRC      , KC_AMPR, KC_PIPE   , KC_BSLS   , KC_TILD  ,
+    LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              KC_LPRN      , KC_LBRC, KC_LABK   , KC_LCBR   , KC_ENT   ,
+    KC_PLUS        , KC_ASTR        , KC_EQL        , KC_DQUO        , KC_COLN       ,                              KC_RPRN      , KC_RBRC, KC_RABK   , KC_RCBR   , KC_BSPC  ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO  , KC_NO     , KC_NO     , KC_NO
   ),
 
   // Layer 2: Number Layer
   [2] = LAYOUT_universal(
-    S(KC_MINS)     , S(KC_2)        , S(KC_3)       , S(KC_4)        , S(KC_5)       ,                              S(KC_6)      , KC_7        , KC_8        , KC_9        , KC_0          ,
-    LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              S(KC_9)      , RCTL_T(KC_4), RGUI_T(KC_5), RALT_T(KC_6), RSFT_T(KC_ENT),
-    S(KC_EQL)      , S(KC_8)        , KC_EQL        , S(KC_QUOT)     , S(KC_SCLN)    ,                              S(KC_0)      , KC_1        , KC_2        , KC_3        , KC_BSPC       ,
+    KC_UNDS        , KC_AT          , KC_HASH       , KC_DLR         , KC_PERC       ,                              KC_CIRC      , KC_7        , KC_8        , KC_9        , KC_0          ,
+    LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              KC_LPRN      , RCTL_T(KC_4), RGUI_T(KC_5), RALT_T(KC_6), RSFT_T(KC_ENT),
+    KC_PLUS        , KC_ASTR        , KC_EQL        , KC_DQUO        , KC_COLN       ,                              KC_RPRN      , KC_1        , KC_2        , KC_3        , KC_BSPC       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
   ),
 
   // Layer 3: Function Layer
   [3] = LAYOUT_universal(
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_PGDN     , KC_NO       , KC_PGUP     , CMDSHIFT4     ,
+    JIS_TGL        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_PGDN     , KC_NO       , KC_PGUP     , CMDSHIFT4     ,
     KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_LEFT      , KC_DOWN     , KC_UP       , KC_RGHT     , KC_ENT        ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_BSPC       ,
     KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
@@ -260,4 +471,5 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 void keyboard_post_init_user(void) {
     layer_state_set_user(layer_state);
     precision_toggle(true);  // トラックボールの速度を初期化
+    defer_exec(100, keyboard_callback, NULL);  // OSを検出
 }
