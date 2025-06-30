@@ -1,6 +1,6 @@
 #pragma once
 
-#define TAP_CODE_DELAY 2
+#define TAP_CODE_DELAY 1
 
 #define COMBO_COUNT 1
 #define COMBO_ONLY_FROM_LAYER 0
@@ -9,4 +9,4 @@
 #define TAPPING_FORCE_HOLD
 
 #define KEYBALL_CPI_DEFAULT 630
-#define KEYBALL_SCROLL_DIV_DEFAULT 7
+#define KEYBALL_SCROLL_DIV_DEFAULT 6

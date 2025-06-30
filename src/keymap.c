@@ -3,8 +3,7 @@
  * @brief Custom QMK keymap:
  * - PR_TGL key toggles trackball speed
  * - Key overrides: Shift+, => ! / Shift+. => ? / Ctrl+H => Backspace / Ctrl+D => Delete
- * - Combo keys: j+k => ESC, .+, => -
- * - CMDSHIFT4 macro for Mac screenshots (Command+Shift+4)
+ * - Combo keys
  */
 
 #include QMK_KEYBOARD_H
@@ -50,6 +49,8 @@ void precision_toggle(bool pressed) {
 enum original_keycodes {
     PR_TGL = SAFE_RANGE,  /** トラックボールの速度を変更するためのトグル */
     JIS_TGL = SAFE_RANGE + 1,  /** JIS配列キーボードの場合のトグル */
+    KATAKANA = SAFE_RANGE + 2,
+    CTLSPC = SAFE_RANGE + 3,
 };
 
 
@@ -126,6 +127,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 is_jis = !is_jis;
             }
             return false;
+        case KATAKANA:
+            if (record->event.pressed && is_jis) {
+                register_code(KC_F7);
+                unregister_code(KC_F7);
+                return false;
+            } else if (record->event.pressed) {
+                register_code(KC_LCTL);
+                register_code(KC_K);
+                unregister_code(KC_K);
+                unregister_code(KC_LCTL);
+                return false;
+            }
+            break;
         case KC_AT:
             if (record->event.pressed && is_jis) {
                 register_code(KC_LBRC);
@@ -332,7 +346,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  */
 const key_override_t exclamation_override = ko_make_basic(
     MOD_MASK_SHIFT,
-    LT(4,KC_COMMA),
+    KC_COMMA,
     KC_EXLM
 );
 
@@ -371,24 +385,36 @@ const key_override_t **key_overrides = overrides_list;
  * @brief コンボキー用のインデックス
  */
 enum combos {
-    JK_ESC,  /** j + k => ESC */
-    DOTCOM_MINS,  /** . + , => - */
+    CO_ESC,
+    CO_TAB,
+    CO_SHIFTTAB,
+    CO_BTN1,
+    CO_BTN2,
+    CO_BTN3,
 };
 
 
 /**
  * @brief コンボに使用するキー列
  */
-const uint16_t PROGMEM jk_combo[] = {RCTL_T(KC_J), RGUI_T(KC_K), COMBO_END};
-const uint16_t PROGMEM dotcom_combo[] = {LT(4,KC_COMM), KC_DOT, COMBO_END};
+const uint16_t PROGMEM ui_combo[] = {KC_U, KC_I, COMBO_END};
+const uint16_t PROGMEM dotcom_combo[] = {KC_COMM, KC_DOT, COMBO_END};
+const uint16_t PROGMEM mdot_combo[] = {KC_M, KC_DOT, COMBO_END};
+const uint16_t PROGMEM mcom_combo[] = {KC_COMM, KC_M, COMBO_END};
+const uint16_t PROGMEM er_combo[] = {KC_E, KC_R, COMBO_END};
+const uint16_t PROGMEM we_combo[] = {KC_E, KC_W, COMBO_END};
 
 
 /**
  * @brief コンボをまとめて定義する配列
  */
 combo_t key_combos[] = {
-  [JK_ESC] = COMBO(jk_combo, KC_ESC),
-  [DOTCOM_MINS] = COMBO(dotcom_combo, KC_MINS),
+  [CO_ESC] = COMBO(ui_combo, KC_ESC),
+  [CO_BTN1] = COMBO(mcom_combo, KC_BTN1),
+  [CO_BTN2] = COMBO(dotcom_combo, KC_BTN2),
+  [CO_BTN3] = COMBO(mdot_combo, KC_BTN3),
+  [CO_TAB] = COMBO(er_combo, KC_TAB),
+  [CO_SHIFTTAB] = COMBO(we_combo, LSFT(KC_TAB)),
 };
 
 
@@ -403,42 +429,26 @@ combo_t key_combos[] = {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // Layer 0: Default Layer
   [0] = LAYOUT_universal(
-    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , LT(3,KC_I)     , KC_O        , KC_P          ,
+    KC_Q           , KC_W           , KC_E          , KC_R           , KC_T          ,                              KC_Y         , KC_U        , KC_I           , KC_O        , KC_P          ,
     LSFT_T(KC_A)   , LALT_T(KC_S)   , LGUI_T(KC_D)  , LCTL_T(KC_F)   , KC_G          ,                              KC_H         , RCTL_T(KC_J), RGUI_T(KC_K)   , RALT_T(KC_L), RSFT_T(KC_ENT),
-    KC_Z           , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , LT(4,KC_M)  , LT(4,KC_COMM)  , KC_DOT      , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO          , KC_NO       , KC_NO
+    LT(1,KC_Z)     , KC_X           , KC_C          , KC_V           , KC_B          ,                              KC_N         , KC_M        , KC_COMM        , KC_DOT      , KC_BSPC,
+    KC_NO          , KC_BTN1        , KC_BTN2       , LT(2,KC_SPC)   , LT(2,KC_SPC)  , LT(2,KC_SPC), LT(2,KC_SPC), LT(2,KC_SPC)  , KC_NO       , KC_NO          , KC_NO       , KC_NO
   ),
 
   // Layer 1: Symbols Layer
   [1] = LAYOUT_universal(
     KC_UNDS        , KC_AT          , KC_HASH       , KC_DLR         , KC_PERC       ,                              KC_CIRC      , KC_AMPR, KC_PIPE   , KC_BSLS   , KC_TILD  ,
-    LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              KC_LPRN      , KC_LBRC, KC_LABK   , KC_LCBR   , KC_ENT   ,
-    KC_PLUS        , KC_ASTR        , KC_EQL        , KC_DQUO        , KC_COLN       ,                              KC_RPRN      , KC_RBRC, KC_RABK   , KC_RCBR   , KC_BSPC  ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO  , KC_NO     , KC_NO     , KC_NO
+    KC_MINS        , KC_PLUS        , KC_DQUO       , KC_QUOT        , KC_COLN       ,                              KC_LPRN      , KC_LBRC, KC_LABK   , KC_LCBR   , KC_ENT   ,
+    KC_EQL         , KC_ASTR        , KC_SLSH       , KC_GRV         , KC_SCLN       ,                              KC_RPRN      , KC_RBRC, KC_RABK   , KC_RCBR   , KC_BSPC   ,
+    KC_NO          , KC_BTN1        , KC_BTN2       , LT(2,KC_SPC)   , LT(2,KC_SPC)  , LT(2,KC_SPC), LT(2,KC_SPC), LT(2,KC_SPC)  , KC_NO       , KC_NO          , KC_NO       , KC_NO
   ),
 
-  // Layer 2: Number Layer
+  // Layer 2: Function/Number Layer
   [2] = LAYOUT_universal(
-    KC_UNDS        , KC_AT          , KC_HASH       , KC_DLR         , KC_PERC       ,                              KC_CIRC      , KC_7        , KC_8        , KC_9        , KC_0          ,
-    LSFT_T(KC_MINS), LALT_T(KC_SLSH), LGUI_T(KC_GRV), LCTL_T(KC_QUOT), KC_SCLN       ,                              KC_LPRN      , RCTL_T(KC_4), RGUI_T(KC_5), RALT_T(KC_6), RSFT_T(KC_ENT),
-    KC_PLUS        , KC_ASTR        , KC_EQL        , KC_DQUO        , KC_COLN       ,                              KC_RPRN      , KC_1        , KC_2        , KC_3        , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(1,KC_LNG2), LT(2,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
-  ),
-
-  // Layer 3: Function Layer
-  [3] = LAYOUT_universal(
-    JIS_TGL        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_PGDN     , KC_NO       , KC_PGUP     , CMDSHIFT4     ,
-    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_LEFT      , KC_DOWN     , KC_UP       , KC_RGHT     , KC_ENT        ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_BSPC       ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
-  ),
-
-  // Layer 4: Mouse Layer
-  [4] = LAYOUT_universal(
-    KBC_RST        , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_NO       , LT(3,KC_NO) , KC_NO       , PR_TGL        ,
-    KC_LSFT        , KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_NO        , KC_NO       , KC_NO       , KC_NO       , KC_NO         ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , KC_NO         ,                              KC_NO        , KC_BTN1     , KC_BTN3     , KC_BTN2     , KC_NO         ,
-    KC_NO          , KC_NO          , KC_NO         , KC_NO          , LSFT_T(KC_SPC), LT(2,KC_TAB), LT(3,KC_LNG2), LT(1,KC_LNG1), KC_NO       , KC_NO       , KC_NO       , KC_NO
+    KC_1           , KC_2           , KC_3          , KC_4           , KC_5          ,                              KC_6         , KC_7        , KC_8        , KC_9        , KC_0          ,
+    LSFT_T(CW_TOGG), KC_LALT        , KC_LGUI       , KC_LCTL        , KC_NO         ,                              KC_LEFT      , KC_DOWN     , KC_UP       , KC_RGHT     , KC_ENT       ,
+    JIS_TGL        , KC_NO          , KC_BTN4       , KC_BTN5        , KC_NO         ,                              KC_HOME      , KC_PGDN     , KC_PGUP     , KC_END      , KATAKANA      ,
+    KC_NO          , KC_BTN1        , KC_BTN2       , LT(2,KC_SPC)   , LT(2,KC_SPC)  , LT(2,KC_SPC), LT(2,KC_SPC), LT(2,KC_SPC)  , KC_NO       , KC_NO          , KC_NO       , KC_NO
   ),
 };
 /** clang-format on */
@@ -454,7 +464,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     uint8_t highest_layer = get_highest_layer(state);
 
     switch (highest_layer) {
-        case 3:
+        case 2:
             keyball_set_scroll_mode(true);
             break;
         default:
